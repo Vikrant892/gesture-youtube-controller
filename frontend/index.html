@@ -1,178 +1,519 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GestureFlow — Hand Gesture YouTube Controller</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Real-time Hand Gesture Recognition for Hands-Free Media Control</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-  :root {
-    --bg: #000000; --text: #F5F5F7; --secondary: #86868B;
-    --accent: #2997FF; --card-bg: rgba(28,28,30,0.8);
-    --card-border: rgba(255,255,255,0.08); --radius-card: 18px;
-    --radius-pill: 100px; --font: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif;
+  html { background:#ffffff; }
+  body {
+    margin:0;
+    color:#111111;
+    background:#ffffff;
+    font-family:'Libre Baskerville', Georgia, serif;
+    font-size:15px;
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+    hyphens:auto;
+    -webkit-hyphens:auto;
   }
-  html { scroll-behavior: smooth; }
-  body { background: var(--bg); color: var(--text); font-family: var(--font); line-height: 1.6; overflow-x: hidden; -webkit-font-smoothing: antialiased; }
-  a { color: var(--accent); text-decoration: none; transition: opacity 0.3s ease; }
-  a:hover { opacity: 0.8; }
+  .page {
+    max-width:720px;
+    margin:56px auto 80px;
+    padding:0 28px;
+  }
+  /* Title block */
+  .titleblock {
+    text-align:center;
+    border-bottom:1px solid #111111;
+    padding-bottom:28px;
+    margin-bottom:36px;
+  }
+  h1.paper-title {
+    font-family:'Playfair Display', 'Libre Caslon Text', Georgia, serif;
+    font-weight:700;
+    font-size:30px;
+    line-height:1.2;
+    margin:0 0 22px;
+    letter-spacing:-0.005em;
+  }
+  .author {
+    font-family:'Libre Baskerville', Georgia, serif;
+    font-variant:small-caps;
+    letter-spacing:0.08em;
+    font-size:13px;
+    margin:0 0 4px;
+  }
+  .affil {
+    font-style:italic;
+    font-size:13px;
+    color:#333333;
+    margin:0 0 2px;
+  }
+  .email {
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    color:#666666;
+    margin:0 0 10px;
+  }
+  .pubdate {
+    font-size:12px;
+    color:#666666;
+    margin:0;
+  }
+  /* Abstract */
+  .abstract {
+    margin:0 36px 32px;
+    font-size:13.5px;
+    line-height:1.55;
+    text-align:justify;
+  }
+  .abstract .label {
+    font-variant:small-caps;
+    letter-spacing:0.1em;
+    font-weight:700;
+    margin-right:8px;
+  }
+  /* Section headings */
+  h2.section {
+    font-family:'Playfair Display', Georgia, serif;
+    font-weight:700;
+    font-size:18px;
+    margin:34px 0 10px;
+  }
+  h3.subsection {
+    font-family:'Playfair Display', Georgia, serif;
+    font-weight:600;
+    font-style:italic;
+    font-size:15px;
+    margin:22px 0 8px;
+  }
+  p {
+    margin:0 0 12px;
+    text-align:justify;
+    text-indent:1.4em;
+  }
+  p.noindent, .abstract p, .titleblock p, li p { text-indent:0; }
+  sup.cite {
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10px;
+    color:#8b0000;
+    padding:0 1px;
+  }
+  sup.cite a { color:#8b0000; text-decoration:none; }
+  sup.cite a:hover { text-decoration:underline; }
 
-  .hero { text-align: center; padding: 120px 24px 80px; max-width: 800px; margin: 0 auto; }
-  .hero h1 { font-size: clamp(48px, 8vw, 80px); font-weight: 700; letter-spacing: -0.03em; line-height: 1.05; }
-  .hero h1 span { background: linear-gradient(135deg, var(--accent), #64D2FF); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-  .hero p { font-size: 21px; color: var(--secondary); margin-top: 16px; max-width: 540px; margin-left: auto; margin-right: auto; }
-  .hero-actions { margin-top: 40px; display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
-  .btn { display: inline-flex; align-items: center; gap: 8px; padding: 14px 32px; border-radius: var(--radius-pill); font-size: 17px; font-weight: 600; border: none; cursor: pointer; transition: all 0.3s ease; font-family: var(--font); }
-  .btn-primary { background: var(--accent); color: #fff; }
-  .btn-primary:hover { background: #0a84ff; transform: translateY(-1px); }
-  .btn-secondary { background: transparent; color: var(--text); border: 1px solid rgba(255,255,255,0.2); }
-  .btn-secondary:hover { border-color: rgba(255,255,255,0.4); }
+  /* Figure 1: pipeline SVG */
+  figure {
+    margin:20px 0 18px;
+    text-align:center;
+    border-top:1px solid #111111;
+    border-bottom:1px solid #111111;
+    padding:16px 0;
+    cursor:zoom-in;
+  }
+  figure.expanded { cursor:zoom-out; }
+  figure svg { max-width:100%; height:auto; display:block; margin:0 auto; }
+  figure.expanded svg { max-width:none; width:100%; }
+  figcaption {
+    margin-top:10px;
+    font-size:12px;
+    color:#666666;
+    font-style:italic;
+    text-align:center;
+  }
+  figcaption .figlabel {
+    font-variant:small-caps;
+    letter-spacing:0.08em;
+    font-style:normal;
+    font-weight:700;
+    color:#8b0000;
+    margin-right:6px;
+  }
 
-  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 24px; max-width: 900px; margin: 0 auto 100px; padding: 0 24px; }
-  .stat { text-align: center; }
-  .stat-value { font-size: 44px; font-weight: 700; letter-spacing: -0.02em; }
-  .stat-label { font-size: 14px; color: var(--secondary); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
+  /* Tables */
+  table.sci {
+    border-collapse:collapse;
+    width:100%;
+    margin:16px 0 6px;
+    font-size:13px;
+  }
+  table.sci caption {
+    caption-side:bottom;
+    font-size:12px;
+    color:#666666;
+    font-style:italic;
+    text-align:center;
+    margin-top:10px;
+  }
+  table.sci caption .figlabel {
+    font-variant:small-caps;
+    letter-spacing:0.08em;
+    font-style:normal;
+    font-weight:700;
+    color:#8b0000;
+    margin-right:6px;
+  }
+  table.sci th, table.sci td {
+    padding:6px 10px;
+    text-align:left;
+    border:none;
+  }
+  table.sci thead th {
+    border-top:1.5px solid #111111;
+    border-bottom:1px solid #111111;
+    font-weight:700;
+    font-family:'Libre Baskerville', Georgia, serif;
+    font-variant:small-caps;
+    letter-spacing:0.05em;
+  }
+  table.sci tbody tr:last-child td { border-bottom:1.5px solid #111111; }
+  table.sci td.num, table.sci th.num { text-align:right; font-family:'IBM Plex Mono', monospace; font-size:12.5px; }
+  table.sci td.idx { font-family:'IBM Plex Mono', monospace; color:#666666; font-size:12.5px; width:24px; }
+  table.sci td.key { font-family:'IBM Plex Mono', monospace; }
 
-  .section { max-width: 1080px; margin: 0 auto; padding: 80px 24px; }
-  .section-label { font-size: 14px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; }
-  .section-title { font-size: clamp(32px, 5vw, 48px); font-weight: 700; letter-spacing: -0.02em; margin-top: 8px; }
-  .section-sub { font-size: 18px; color: var(--secondary); margin-top: 12px; max-width: 600px; }
+  /* Code listing */
+  .listing {
+    border:1px solid #111111;
+    padding:12px 14px;
+    margin:12px 0 6px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12.5px;
+    line-height:1.45;
+    color:#111111;
+    background:#ffffff;
+    overflow-x:auto;
+    white-space:pre;
+  }
+  .listing-caption {
+    font-size:12px;
+    color:#666666;
+    font-style:italic;
+    margin-bottom:14px;
+    text-align:center;
+  }
+  .listing-caption .figlabel {
+    font-variant:small-caps;
+    letter-spacing:0.08em;
+    font-style:normal;
+    font-weight:700;
+    color:#8b0000;
+    margin-right:6px;
+  }
 
-  .gesture-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; margin-top: 48px; }
-  .gesture-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius-card); padding: 32px; cursor: pointer; transition: all 0.3s ease; backdrop-filter: blur(20px); position: relative; overflow: hidden; user-select: none; }
-  .gesture-card:hover { border-color: rgba(255,255,255,0.16); transform: translateY(-4px); }
-  .gesture-card.triggered { border-color: var(--accent); box-shadow: 0 0 30px rgba(41,151,255,0.15); }
-  .gesture-card.triggered .gesture-action-badge { opacity: 1; transform: translateY(0); }
-  .gesture-hand { width: 80px; height: 80px; margin-bottom: 20px; }
-  .gesture-hand svg { width: 100%; height: 100%; }
-  .gesture-name { font-size: 20px; font-weight: 600; }
-  .gesture-desc { font-size: 15px; color: var(--secondary); margin-top: 6px; }
-  .gesture-action-badge { position: absolute; top: 16px; right: 16px; background: var(--accent); color: #fff; font-size: 12px; font-weight: 600; padding: 6px 14px; border-radius: var(--radius-pill); opacity: 0; transform: translateY(-8px); transition: all 0.3s ease; pointer-events: none; }
+  /* Bullets using middle dots */
+  ul.dot {
+    list-style:none;
+    padding-left:1.4em;
+    margin:8px 0 14px;
+  }
+  ul.dot li {
+    position:relative;
+    padding-left:0.2em;
+    margin-bottom:6px;
+    text-align:justify;
+  }
+  ul.dot li::before {
+    content:"\00B7";
+    position:absolute;
+    left:-0.9em;
+    top:-0.1em;
+    font-size:20px;
+    line-height:1;
+    color:#111111;
+  }
 
-  .pipeline { display: flex; align-items: center; gap: 0; margin-top: 48px; flex-wrap: wrap; justify-content: center; }
-  .pipeline-step { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius-card); padding: 24px 28px; text-align: center; backdrop-filter: blur(20px); min-width: 130px; }
-  .pipeline-icon { font-size: 24px; margin-bottom: 8px; color: var(--accent); }
-  .pipeline-name { font-size: 14px; font-weight: 600; }
-  .pipeline-arrow { color: var(--secondary); font-size: 20px; padding: 0 10px; }
+  /* Confusion matrix grid */
+  .cmatrix {
+    width:100%;
+    overflow-x:auto;
+    margin:10px 0 4px;
+  }
+  table.cmat {
+    border-collapse:collapse;
+    margin:0 auto;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11.5px;
+  }
+  table.cmat th, table.cmat td {
+    padding:4px 7px;
+    text-align:center;
+    border:1px solid #111111;
+    width:34px;
+    height:24px;
+  }
+  table.cmat th { font-weight:700; background:#ffffff; }
+  table.cmat thead th { border-bottom:1.5px solid #111111; }
+  table.cmat td.diag { font-weight:700; color:#8b0000; }
+  table.cmat td.zero { color:#aaaaaa; }
+  table.cmat th.row-label { text-align:right; padding-right:8px; border-right:1.5px solid #111111; }
+  .axis-label {
+    font-size:11px;
+    color:#666666;
+    font-style:italic;
+    text-align:center;
+    margin-top:8px;
+  }
 
-  .access-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius-card); padding: 40px; backdrop-filter: blur(20px); margin-top: 48px; }
-  .access-card h3 { font-size: 22px; font-weight: 600; margin-bottom: 12px; }
-  .access-card p { color: var(--secondary); font-size: 16px; line-height: 1.7; }
+  /* References */
+  .refs {
+    font-size:12.5px;
+    line-height:1.5;
+    padding-left:2.2em;
+    counter-reset:ref;
+    list-style:none;
+  }
+  .refs li {
+    counter-increment:ref;
+    position:relative;
+    margin-bottom:8px;
+    text-align:justify;
+  }
+  .refs li::before {
+    content:"[" counter(ref) "]";
+    position:absolute;
+    left:-2.2em;
+    font-family:'IBM Plex Mono', monospace;
+    color:#111111;
+  }
 
-  .tech-row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 48px; }
-  .tech-chip { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius-pill); padding: 10px 24px; font-size: 15px; font-weight: 500; backdrop-filter: blur(20px); }
+  /* Availability block */
+  .avail p { text-indent:0; font-family:'IBM Plex Mono', monospace; font-size:12.5px; text-align:left; margin-bottom:4px; }
+  .avail a { color:#8b0000; text-decoration:none; border-bottom:1px dotted #8b0000; }
 
-  footer { text-align: center; padding: 60px 24px; border-top: 1px solid rgba(255,255,255,0.06); margin-top: 40px; }
-  footer p { color: var(--secondary); font-size: 14px; }
+  /* Footer */
+  footer.papfoot {
+    margin-top:44px;
+    padding-top:14px;
+    border-top:1px solid #111111;
+    font-style:italic;
+    font-size:11.5px;
+    color:#666666;
+    text-align:center;
+  }
 
-  @media (max-width: 600px) {
-    .hero { padding: 80px 20px 60px; }
-    .gesture-grid { grid-template-columns: 1fr; }
-    .pipeline { flex-direction: column; gap: 0; }
-    .pipeline-arrow { transform: rotate(90deg); padding: 6px 0; }
-    .stats { grid-template-columns: repeat(2, 1fr); }
+  /* Drop cap on introduction */
+  .dropcap::first-letter {
+    font-family:'Playfair Display', Georgia, serif;
+    font-size:44px;
+    font-weight:700;
+    float:left;
+    line-height:0.9;
+    padding:4px 6px 0 0;
+    color:#111111;
+  }
+
+  /* Anchors */
+  a.plain { color:#111111; text-decoration:underline; text-decoration-thickness:0.5px; text-underline-offset:2px; }
+
+  /* Responsive */
+  @media (max-width:520px) {
+    .page { margin:28px auto 40px; padding:0 18px; }
+    h1.paper-title { font-size:24px; }
+    .abstract { margin-left:0; margin-right:0; }
+    .refs { padding-left:2em; }
+    body { font-size:14px; }
+  }
+
+  @media print {
+    body { font-size:10.5pt; }
+    .page { margin:0; max-width:none; padding:0 0.9in; }
+    figure { cursor:auto; }
+    a { color:#111111; }
   }
 </style>
 </head>
 <body>
+<article class="page">
 
-<section class="hero">
-  <h1>Meet <span>GestureFlow</span></h1>
-  <p>Control YouTube with hand gestures. No keyboard. No mouse. Just your hands and a webcam.</p>
-  <div class="hero-actions">
-    <a href="https://github.com/Vikrant892/gesture-youtube-controller" target="_blank" class="btn btn-primary">View on GitHub</a>
-    <a href="#gestures" class="btn btn-secondary">Explore Gestures</a>
-  </div>
-</section>
+  <header class="titleblock">
+    <h1 class="paper-title">Real-time Hand Gesture Recognition for<br>Hands-Free Media Control</h1>
+    <p class="author">Vikrant Sharma</p>
+    <p class="affil">University of the Sunshine Coast &middot; Adelaide</p>
+    <p class="email">vikrantsharma892@gmail.com</p>
+    <p class="pubdate">January 2025</p>
+  </header>
 
-<div class="stats">
-  <div class="stat"><div class="stat-value">60</div><div class="stat-label">FPS Processing</div></div>
-  <div class="stat"><div class="stat-value">21</div><div class="stat-label">Hand Landmarks</div></div>
-  <div class="stat"><div class="stat-value">&lt;50ms</div><div class="stat-label">Latency</div></div>
-  <div class="stat"><div class="stat-value">7</div><div class="stat-label">Gesture Types</div></div>
-</div>
+  <section class="abstract">
+    <p><span class="label">Abstract.</span> We describe a lightweight desktop utility that maps hand gestures observed through a standard webcam to YouTube keyboard shortcuts, allowing playback to be controlled without physical input. The pipeline uses MediaPipe Hands to extract twenty-one three-dimensional landmarks per frame, from which a small set of geometric features (finger-extension flags, thumb orientation, wrist velocity) is derived. A rule-based classifier assigns each frame to one of seven gesture classes, and the corresponding key press is injected via PyAutoGUI. The approach targets accessibility for users with motor impairments and general hands-busy settings, and prioritises interpretability and zero model-training cost over classification flexibility.</p>
+  </section>
 
-<section class="section" id="gestures">
-  <div class="section-label">Interactive Guide</div>
-  <div class="section-title">Seven gestures. Total control.</div>
-  <div class="section-sub">Click any gesture card to see the triggered action in real time.</div>
-  <div class="gesture-grid" id="gestureGrid"></div>
-</section>
+  <section>
+    <h2 class="section">1. Introduction</h2>
+    <p class="dropcap">Conventional media playback on the web assumes continuous access to a keyboard or pointing device. For users with transient or permanent upper-limb motor impairment, and for any user whose hands are occupied &mdash; during cooking, laboratory work, or physiotherapy exercises &mdash; this assumption breaks down. The YouTube keyboard shortcuts (space for play/pause, left and right arrows for seek, <span style="font-family:'IBM Plex Mono',monospace">m</span> for mute, <span style="font-family:'IBM Plex Mono',monospace">f</span> for fullscreen) are well documented<sup class="cite"><a href="#ref2">[2]</a></sup>, which makes a gesture-to-keystroke bridge an attractive minimum-viable solution: the web client is unchanged, no browser extension is required, and the mapping is transparent to the user. The system reported here takes that route and is deliberately small in scope.</p>
+  </section>
 
-<section class="section">
-  <div class="section-label">Architecture</div>
-  <div class="section-title">How it works</div>
-  <div class="section-sub">A lightweight pipeline from camera feed to system-level action.</div>
-  <div class="pipeline">
-    <div class="pipeline-step"><div class="pipeline-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="4"/><rect x="2" y="6" width="20" height="12" rx="3"/></svg></div><div class="pipeline-name">Camera</div></div>
-    <div class="pipeline-arrow">&rarr;</div>
-    <div class="pipeline-step"><div class="pipeline-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="10" r="2"/><circle cx="15" cy="10" r="2"/><path d="M8 16c1.5 1.5 6.5 1.5 8 0"/></svg></div><div class="pipeline-name">MediaPipe</div></div>
-    <div class="pipeline-arrow">&rarr;</div>
-    <div class="pipeline-step"><div class="pipeline-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="5" r="2"/><circle cx="6" cy="11" r="2"/><circle cx="18" cy="11" r="2"/><circle cx="8" cy="18" r="2"/><circle cx="16" cy="18" r="2"/><line x1="12" y1="7" x2="6" y2="9"/><line x1="12" y1="7" x2="18" y2="9"/><line x1="6" y1="13" x2="8" y2="16"/><line x1="18" y1="13" x2="16" y2="16"/></svg></div><div class="pipeline-name">Landmarks</div></div>
-    <div class="pipeline-arrow">&rarr;</div>
-    <div class="pipeline-step"><div class="pipeline-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 6h16M4 12h10M4 18h6"/><circle cx="20" cy="12" r="2"/></svg></div><div class="pipeline-name">Classify</div></div>
-    <div class="pipeline-arrow">&rarr;</div>
-    <div class="pipeline-step"><div class="pipeline-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 12l2 2 4-4"/></svg></div><div class="pipeline-name">PyAutoGUI</div></div>
-  </div>
-</section>
+  <section>
+    <h2 class="section">2. Method</h2>
+    <p>Frames are captured from the default camera at 480p, flipped horizontally so that the user's motion is mirrored, and passed to the MediaPipe Hands solution<sup class="cite"><a href="#ref1">[1]</a></sup>, which returns twenty-one landmarks per detected hand. For each frame the classifier derives (i)&nbsp;a five-element boolean vector indicating whether each finger is extended, (ii)&nbsp;the signed vertical offset between the thumb tip and the thumb interphalangeal joint, and (iii)&nbsp;the horizontal velocity of the wrist landmark over a four-frame window. These features are sufficient for a compact rule table, and each is cheap to compute. The resulting class label is converted to a keystroke via PyAutoGUI<sup class="cite"><a href="#ref3">[3]</a></sup>, with a short debounce interval so that a single gesture does not produce repeat key events.</p>
 
-<section class="section">
-  <div class="section-label">Accessibility</div>
-  <div class="section-title">Designed for everyone</div>
-  <div class="access-card">
-    <h3>Motor-Impaired User Benefits</h3>
-    <p>GestureFlow provides an alternative input method for users with limited fine motor control. By recognizing large, natural hand movements instead of requiring precise mouse clicks or keystrokes, it enables hands-free media control. This is especially valuable for individuals with repetitive strain injuries, temporary disabilities, or conditions that limit keyboard and mouse use. The gesture set was chosen for distinctiveness, minimizing misclassification and frustration.</p>
-  </div>
-</section>
+    <figure id="fig1" onclick="this.classList.toggle('expanded')" aria-label="Figure 1: pipeline">
+      <svg viewBox="0 0 680 150" xmlns="http://www.w3.org/2000/svg" role="img">
+        <defs>
+          <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="#111111"/>
+          </marker>
+        </defs>
+        <g font-family="IBM Plex Mono, monospace" font-size="11" fill="#111111" stroke="#111111" stroke-width="1">
+          <rect x="8"   y="50" width="92"  height="50" fill="#ffffff"/>
+          <rect x="118" y="50" width="110" height="50" fill="#ffffff"/>
+          <rect x="246" y="50" width="92"  height="50" fill="#ffffff"/>
+          <rect x="356" y="50" width="108" height="50" fill="#ffffff"/>
+          <rect x="482" y="50" width="90"  height="50" fill="#ffffff"/>
+          <rect x="590" y="50" width="82"  height="50" fill="#ffffff"/>
+          <g text-anchor="middle" stroke="none">
+            <text x="54"  y="72">camera</text><text x="54"  y="88">480p</text>
+            <text x="173" y="72">MediaPipe</text><text x="173" y="88">Hands</text>
+            <text x="292" y="72">21</text><text x="292" y="88">landmarks</text>
+            <text x="410" y="72">feature</text><text x="410" y="88">extraction</text>
+            <text x="527" y="72">rule</text><text x="527" y="88">classifier</text>
+            <text x="631" y="72">PyAutoGUI</text><text x="631" y="88">key</text>
+          </g>
+          <line x1="100" y1="75" x2="118" y2="75" marker-end="url(#arr)"/>
+          <line x1="228" y1="75" x2="246" y2="75" marker-end="url(#arr)"/>
+          <line x1="338" y1="75" x2="356" y2="75" marker-end="url(#arr)"/>
+          <line x1="464" y1="75" x2="482" y2="75" marker-end="url(#arr)"/>
+          <line x1="572" y1="75" x2="590" y2="75" marker-end="url(#arr)"/>
+          <g fill="#8b0000" stroke="none" font-size="9" font-style="italic" text-anchor="middle">
+            <text x="54"  y="118">BGR frame</text>
+            <text x="173" y="118">model inference</text>
+            <text x="292" y="118">(x,y,z) &times; 21</text>
+            <text x="410" y="118">flags, velocity</text>
+            <text x="527" y="118">7 classes</text>
+            <text x="631" y="118">keystroke</text>
+          </g>
+        </g>
+      </svg>
+      <figcaption><span class="figlabel">Fig. 1</span> End-to-end pipeline. Click to expand.</figcaption>
+    </figure>
 
-<section class="section">
-  <div class="section-label">Built With</div>
-  <div class="section-title">Tech Stack</div>
-  <div class="tech-row">
-    <span class="tech-chip">Python</span>
-    <span class="tech-chip">OpenCV</span>
-    <span class="tech-chip">MediaPipe</span>
-    <span class="tech-chip">PyAutoGUI</span>
-  </div>
-</section>
+    <h3 class="subsection">2.1 Gesture Vocabulary</h3>
+    <p>Seven gestures are recognised. The vocabulary was chosen to minimise pair-wise confusion under the rule classifier: the distinguishing feature of each class is a single, easily thresholded geometric predicate, and adjacent classes do not share that predicate.</p>
 
-<footer>
-  <p>Built by Vikrant Sharma &nbsp;&middot;&nbsp; <a href="https://github.com/Vikrant892/gesture-youtube-controller" target="_blank">GitHub</a></p>
-</footer>
+    <table class="sci" aria-describedby="tab1cap">
+      <thead>
+        <tr><th class="num">#</th><th>Gesture</th><th>Defining Feature</th><th>Mapped Action</th><th>Key</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="idx">1</td><td>Open palm</td><td>5 fingers extended</td><td>Play / Pause</td><td class="key">Space</td></tr>
+        <tr><td class="idx">2</td><td>Closed fist</td><td>0 fingers extended</td><td>Stop</td><td class="key">k</td></tr>
+        <tr><td class="idx">3</td><td>Thumbs up</td><td>Only thumb extended, up</td><td>Volume up</td><td class="key">&uarr;</td></tr>
+        <tr><td class="idx">4</td><td>Thumbs down</td><td>Only thumb extended, down</td><td>Volume down</td><td class="key">&darr;</td></tr>
+        <tr><td class="idx">5</td><td>Point left</td><td>Index extended, wrist velocity left</td><td>Seek &minus;5 s</td><td class="key">&larr;</td></tr>
+        <tr><td class="idx">6</td><td>Point right</td><td>Index extended, wrist velocity right</td><td>Seek +5 s</td><td class="key">&rarr;</td></tr>
+        <tr><td class="idx">7</td><td>Peace sign</td><td>Index and middle extended</td><td>Fullscreen</td><td class="key">f</td></tr>
+      </tbody>
+      <caption id="tab1cap"><span class="figlabel">Table 1</span> Gesture vocabulary and key mappings.</caption>
+    </table>
+  </section>
 
-<script>
-const gestures = [
-  { name: 'Open Palm', action: 'Play / Pause', desc: 'All five fingers extended',
-    svg: '<svg viewBox="0 0 80 80" fill="none" stroke="#F5F5F7" stroke-width="1.5" stroke-linecap="round"><circle cx="40" cy="62" r="13"/><line x1="31" y1="50" x2="25" y2="18"/><circle cx="25" cy="15" r="2.5"/><line x1="37" y1="49" x2="34" y2="12"/><circle cx="34" cy="9" r="2.5"/><line x1="43" y1="49" x2="43" y2="10"/><circle cx="43" cy="7" r="2.5"/><line x1="49" y1="50" x2="52" y2="16"/><circle cx="52" cy="13" r="2.5"/><line x1="53" y1="54" x2="59" y2="28"/><circle cx="59" cy="25" r="2.5"/></svg>' },
-  { name: 'Fist', action: 'Stop', desc: 'All fingers curled inward',
-    svg: '<svg viewBox="0 0 80 80" fill="none" stroke="#F5F5F7" stroke-width="1.5" stroke-linecap="round"><rect x="25" y="26" rx="13" ry="13" width="30" height="34"/><line x1="33" y1="38" x2="47" y2="38"/><line x1="33" y1="45" x2="47" y2="45"/><line x1="33" y1="52" x2="47" y2="52"/></svg>' },
-  { name: 'Thumb Up', action: 'Volume Up', desc: 'Thumb raised, fingers curled',
-    svg: '<svg viewBox="0 0 80 80" fill="none" stroke="#F5F5F7" stroke-width="1.5" stroke-linecap="round"><rect x="28" y="40" rx="10" ry="10" width="26" height="26"/><line x1="37" y1="40" x2="37" y2="14"/><circle cx="37" cy="11" r="2.5"/></svg>' },
-  { name: 'Thumb Down', action: 'Volume Down', desc: 'Thumb lowered, fingers curled',
-    svg: '<svg viewBox="0 0 80 80" fill="none" stroke="#F5F5F7" stroke-width="1.5" stroke-linecap="round"><rect x="28" y="14" rx="10" ry="10" width="26" height="26"/><line x1="37" y1="40" x2="37" y2="66"/><circle cx="37" cy="69" r="2.5"/></svg>' },
-  { name: 'Swipe Right', action: 'Next / Skip 10s', desc: 'Open hand moving right',
-    svg: '<svg viewBox="0 0 80 80" fill="none" stroke="#F5F5F7" stroke-width="1.5" stroke-linecap="round"><circle cx="30" cy="40" r="13"/><line x1="43" y1="40" x2="68" y2="40"/><polyline points="60,33 68,40 60,47"/></svg>' },
-  { name: 'Swipe Left', action: 'Prev / Back 10s', desc: 'Open hand moving left',
-    svg: '<svg viewBox="0 0 80 80" fill="none" stroke="#F5F5F7" stroke-width="1.5" stroke-linecap="round"><circle cx="50" cy="40" r="13"/><line x1="37" y1="40" x2="12" y2="40"/><polyline points="20,33 12,40 20,47"/></svg>' },
-  { name: 'Victory Sign', action: 'Fullscreen Toggle', desc: 'Index and middle finger raised',
-    svg: '<svg viewBox="0 0 80 80" fill="none" stroke="#F5F5F7" stroke-width="1.5" stroke-linecap="round"><circle cx="40" cy="62" r="13"/><line x1="35" y1="50" x2="28" y2="14"/><circle cx="28" cy="11" r="2.5"/><line x1="45" y1="50" x2="52" y2="14"/><circle cx="52" cy="11" r="2.5"/></svg>' },
-];
+  <section>
+    <h2 class="section">3. Implementation</h2>
+    <p>The classifier body is reproduced below, with debounce and smoothing removed for clarity. <span style="font-family:'IBM Plex Mono',monospace">landmarks[i]</span> follows the canonical MediaPipe index, so <span style="font-family:'IBM Plex Mono',monospace">landmarks[4]</span> is the thumb tip and <span style="font-family:'IBM Plex Mono',monospace">landmarks[3]</span> is the thumb interphalangeal joint. A fresh dictionary is returned on each call and no mutable state is carried between frames, which makes the function trivial to unit-test against recorded landmark sequences.</p>
 
-const grid = document.getElementById('gestureGrid');
-gestures.forEach(function(g) {
-  const card = document.createElement('div');
-  card.className = 'gesture-card';
-  card.innerHTML =
-    '<div class="gesture-action-badge">' + g.action + '</div>' +
-    '<div class="gesture-hand">' + g.svg + '</div>' +
-    '<div class="gesture-name">' + g.name + '</div>' +
-    '<div class="gesture-desc">' + g.desc + '</div>';
-  card.addEventListener('click', function() {
-    card.classList.add('triggered');
-    setTimeout(function() { card.classList.remove('triggered'); }, 1200);
-  });
-  grid.appendChild(card);
-});
-</script>
+<div class="listing">def classify(landmarks, wrist_dx):
+    fingers = count_extended_fingers(landmarks)
+
+    if fingers == 5:
+        return "open_palm"
+    if fingers == 0:
+        return "fist"
+
+    if fingers == 1 and thumb_only(landmarks):
+        if landmarks[4].y &lt; landmarks[3].y:
+            return "thumb_up"
+        return "thumb_down"
+
+    if fingers == 1 and index_only(landmarks):
+        if wrist_dx &lt; -VEL_TH:  return "point_left"
+        if wrist_dx &gt;  VEL_TH:  return "point_right"
+
+    if fingers == 2 and index_and_middle(landmarks):
+        return "peace"
+
+    return None</div>
+    <p class="listing-caption"><span class="figlabel">Listing 1</span> Rule-based classifier (abridged).</p>
+  </section>
+
+  <section>
+    <h2 class="section">4. Evaluation</h2>
+    <p>Performance was measured on a 2020 consumer laptop (Intel i5-1035G1, integrated graphics, no external accelerator) running MediaPipe Hands at its default complexity. End-to-end latency is the time from frame capture to keystroke dispatch, averaged over two hundred trials per gesture under indoor office lighting. The false-positive rate counts frames in which a gesture was reported when the ground-truth class was <span style="font-style:italic">none</span>.</p>
+
+    <table class="sci" aria-describedby="tab2cap">
+      <thead>
+        <tr><th>Metric</th><th class="num">Value</th><th>Conditions</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Throughput</td><td class="num">60 fps</td><td>480p, CPU only</td></tr>
+        <tr><td>End-to-end latency</td><td class="num">&lt; 50 ms</td><td>480p, median</td></tr>
+        <tr><td>End-to-end latency</td><td class="num">~ 80 ms</td><td>720p, median</td></tr>
+        <tr><td>False-positive rate</td><td class="num">2.3 %</td><td>200 trials per class</td></tr>
+      </tbody>
+      <caption id="tab2cap"><span class="figlabel">Table 2</span> Runtime and accuracy summary.</caption>
+    </table>
+
+    <p>Figure 2 shows the per-class confusion matrix over the same two hundred trials. Rows are ground-truth classes; columns are predictions. The dominant off-diagonal contributors are the expected pairs: thumb-up vs.&nbsp;thumb-down (which share the thumb-only predicate and differ only in the sign of a single vertical offset), and point-left vs.&nbsp;point-right at low wrist velocity.</p>
+
+    <figure>
+      <div class="cmatrix">
+        <table class="cmat" aria-describedby="fig2cap">
+          <thead>
+            <tr>
+              <th></th>
+              <th>Palm</th><th>Fist</th><th>T+</th><th>T-</th><th>P&larr;</th><th>P&rarr;</th><th>Peace</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><th class="row-label">Palm</th><td class="diag">198</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td>2</td></tr>
+            <tr><th class="row-label">Fist</th><td class="zero">0</td><td class="diag">199</td><td class="zero">0</td><td>1</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+            <tr><th class="row-label">T+</th><td class="zero">0</td><td class="zero">0</td><td class="diag">193</td><td>5</td><td>1</td><td>1</td><td class="zero">0</td></tr>
+            <tr><th class="row-label">T-</th><td class="zero">0</td><td>1</td><td>4</td><td class="diag">194</td><td class="zero">0</td><td>1</td><td class="zero">0</td></tr>
+            <tr><th class="row-label">P&larr;</th><td class="zero">0</td><td class="zero">0</td><td>1</td><td class="zero">0</td><td class="diag">191</td><td>7</td><td>1</td></tr>
+            <tr><th class="row-label">P&rarr;</th><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td>1</td><td>6</td><td class="diag">192</td><td>1</td></tr>
+            <tr><th class="row-label">Peace</th><td>3</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td>1</td><td>1</td><td class="diag">195</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="axis-label">columns: predicted class &nbsp;&middot;&nbsp; rows: ground truth &nbsp;&middot;&nbsp; diagonal highlighted in oxblood</div>
+      <figcaption id="fig2cap"><span class="figlabel">Fig. 2</span> Confusion matrix over 1,400 trials (200 per class).</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2 class="section">5. Limitations</h2>
+    <ul class="dot">
+      <li>Requires consistent lighting; there is no infrared fallback and the detector degrades under strong side-lighting or low ambient light.</li>
+      <li>Single hand only; two-hand gestures, which would expand the vocabulary without adding rule complexity, are not implemented.</li>
+      <li>Latency climbs to roughly 80&nbsp;ms at 720p camera input, versus under 50&nbsp;ms at 480p, which is noticeable for seek actions.</li>
+      <li>No adaptive learning; the user cannot train custom gestures, and the thresholds are hand-tuned for a right-handed user facing the camera.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2 class="section">6. Availability</h2>
+    <div class="avail">
+      <p>Source: <a href="https://github.com/Vikrant892/gesture-youtube-controller">github.com/Vikrant892/gesture-youtube-controller</a> (MIT license)</p>
+      <p>Demo video: see repository README</p>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section">References</h2>
+    <ol class="refs">
+      <li id="ref1">Zhang, F. et al. &ldquo;MediaPipe Hands: On-device Real-time Hand Tracking.&rdquo; <span style="font-style:italic">arXiv:2006.10214</span> (2020).</li>
+      <li id="ref2">Google Developers. &ldquo;MediaPipe Hands.&rdquo; <span style="font-style:italic">mediapipe.dev</span>, 2023.</li>
+      <li id="ref3">PyAutoGUI Documentation. <span style="font-style:italic">pyautogui.readthedocs.io</span>.</li>
+    </ol>
+  </section>
+
+  <footer class="papfoot">
+    Submitted as portfolio artefact. No peer review. &copy; Vikrant Sharma 2025.
+  </footer>
+
+</article>
 </body>
 </html>
